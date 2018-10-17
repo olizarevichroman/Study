@@ -6,22 +6,34 @@ namespace GeneticAlgorithm
 {
   public class Matrix
   {
-    private readonly int _rows;
+    public int Rows { get; private set; }
 
-    private readonly int _columns;
+    public int Columns { get; private set; }
 
     private readonly int[,] _values;
 
     public Matrix(int rows, int columns)
     {
-      _rows = rows;
-      _columns = columns;
+      Rows = rows;
+      Columns = columns;
       _values = new int[rows, columns];
     }
 
+    public Matrix(int dimension) : this(dimension, dimension) { }
+
     public Matrix FillRandomValues(int min, int max)
     {
-      throw new NotImplementedException();
+      var randomizer = new Random();
+
+      for(int i =0; i < Rows; i++)
+      {
+        for(int j =0; j < Columns; j++)
+        {
+          _values[i, j] = randomizer.Next(min, max);
+        }
+      }
+
+      return this;
     }
 
 

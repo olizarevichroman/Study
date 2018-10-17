@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace GeneticAlgorithm
 {
@@ -12,13 +12,18 @@ namespace GeneticAlgorithm
 
     private readonly int _loopsAmountRestriction;
 
-    public GeneticAlgorithm(int loopsAmountRestriction)
+    private readonly int _initialPopulationAmount;
+
+    public GeneticAlgorithm(int loopsAmountRestriction, int initialPopulationAmount)
     {
       _loopsAmountRestriction = loopsAmountRestriction;
+      _initialPopulationAmount = initialPopulationAmount;
     }
 
     public Individual GetBest()
     {
+      _parents = InitializaParents();
+
       for(int i = 0; i < _loopsAmountRestriction; i++)
       {
 
@@ -27,9 +32,22 @@ namespace GeneticAlgorithm
       return _bestIndividual;
     }
 
-    public void Crossover(Individual firstParent, Individual secondParent)
+    private IEnumerable<Individual> InitializaParents()
     {
-      throw new NotImplementedException();
+      for( int i = 0; i < _initialPopulationAmount; i++)
+      {
+        var chromosome = new Matrix(3, 7).Fil
+        var parent = new Individual(chromosome);
+        _parents.Append()
+      }
+    }
+
+    public IEnumerable<Individual> Crossover(Individual firstParent, Individual secondParent)
+    {
+      var randomizer = new Random();
+      var breakPoint = randomizer.Next(1, firstParent.Chromosome.Rows);
+
+      
     }
 
     public Individual Mutate(Individual individual)

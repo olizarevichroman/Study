@@ -8,11 +8,11 @@ namespace GeneticAlgorithm
   {
     public int FitnessValue { get; private set; }
 
-    private Matrix _chromosome;
+    public Matrix Chromosome { get; private set; }
 
     public Individual(Matrix chromosome)
     {
-      _chromosome = chromosome;
+      Chromosome = chromosome;
     }
   }
 }
