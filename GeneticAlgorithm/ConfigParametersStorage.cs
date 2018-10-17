@@ -13,5 +13,7 @@ namespace GeneticAlgorithm
     public static string ComputersAmount { get; } = "computersAmount";
 
     public static string LoopsAmountRestriction { get; } = "loopsAmountRestriction";
+
+    public static string InitialPopulationAmount { get; } = "initialPopulationAmount";
   }
 }
