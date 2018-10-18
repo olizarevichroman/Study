@@ -15,5 +15,7 @@ namespace GeneticAlgorithm
     public const string LOOPS_AMOUNT_RESTRICTION = "loopsAmountRestriction";
 
     public const string INITIAL_POPULATIONS_AMOUNT = "initialPopulationAmount";
+
+    public const string MUTATION_PROBABILITY = "mutationProbability";
   }
 }

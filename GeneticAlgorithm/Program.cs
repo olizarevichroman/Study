@@ -2,6 +2,7 @@
 using System;
 using Newtonsoft.Json;
 using System.IO;
+using System.Collections.Generic;
 
 namespace GeneticAlgorithm
 {
@@ -18,7 +19,9 @@ namespace GeneticAlgorithm
 
       var algorithmData = JsonConvert.DeserializeObject<AlgorithmData>(jsonData);
 
-      var algorithm = new GeneticAlgorithm(algorithmData);
+      var trafficMatrix = new List<int[]>().FillWithoutDiagonals(50, 140, algorithmData.ComputersAmount);
+
+      var algorithm = new GeneticAlgorithm(algorithmData, trafficMatrix);
       Console.WriteLine(algorithm.GetBest());
     }
   }

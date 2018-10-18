@@ -20,5 +20,8 @@ namespace GeneticAlgorithm
 
     [JsonProperty(ConfigParametersStorage.MAX_CONNECTIONS_AMOUNT)]
     public int MaxConnectionsAmount { get; set; }
+
+    [JsonProperty(ConfigParametersStorage.MUTATION_PROBABILITY)]
+    public double MutationProbability { get; set; }
   }
 }

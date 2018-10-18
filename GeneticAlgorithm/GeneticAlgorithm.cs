@@ -6,17 +6,17 @@ namespace GeneticAlgorithm
 {
   public class GeneticAlgorithm
   {
-    private IEnumerable<Individual> _parents;
 
-    private readonly Individual _bestIndividual;
+    private Individual _bestIndividual;
 
     private readonly AlgorithmData _algorithmData;
 
     public List<int[]> TrafficMatrix { get; private set; }
 
-    public GeneticAlgorithm(AlgorithmData algorithmData)
+    public GeneticAlgorithm(AlgorithmData algorithmData, List<int[]> trafficMatrix)
     {
       _algorithmData = algorithmData;
+      TrafficMatrix = trafficMatrix;
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ namespace GeneticAlgorithm
     /// </summary>
     /// <param name="individuals">Collection of individuals</param>
     /// <returns>Value of total fitness</returns>
-    private int GetFitnessValue(IEnumerable<Individual> individuals)
+    private int GetFitnessValue(List<Individual> individuals)
     {
       int result = 0;
 
@@ -71,11 +71,35 @@ namespace GeneticAlgorithm
     }
     public Individual GetBest()
     {
-      _parents = InitializaParents();
+      var parents = InitializaParents();
 
       for(int i = 0; i < _algorithmData.LoopsAmountRestriction; i++)
       {
+        var selected = Select(parents);
 
+        if (_bestIndividual == null)
+        {
+          _bestIndividual = selected.First();
+        }
+
+        foreach(var individual in selected)
+        {
+          if(_bestIndividual.FitnessValue > individual.FitnessValue)
+          {
+            _bestIndividual = individual;
+          }
+        }
+
+        var childs = Crossover(selected);
+        var childsFitness = GetFitnessValue(childs);
+        var parentsFitness = GetFitnessValue(parents);
+        
+        if(childsFitness >= parentsFitness)
+        {
+          childs = TryMutate(childs);
+        }
+
+        parents = childs;
       }
 
       return _bestIndividual;
@@ -85,7 +109,7 @@ namespace GeneticAlgorithm
     /// Creates initial population
     /// </summary>
     /// <returns>Initial population</returns>
-    private IEnumerable<Individual> InitializaParents()
+    private List<Individual> InitializaParents()
     {
       var parents = new List<Individual>(_algorithmData.InitialPopulationAmount);
 
@@ -94,7 +118,8 @@ namespace GeneticAlgorithm
         var chromosome = new List<int[]>()
           .FillRows(_algorithmData.ComputersAmount, _algorithmData.CommutatorsAmount, ChromosomeFiller);
          
-        var parent = new Individual(chromosome);
+        var parent = new Individual(chromosome, GetFitnessValue);
+
         parents.Add(parent);
       }
 
@@ -120,7 +145,7 @@ namespace GeneticAlgorithm
           index = randomizer.Next(0, _algorithmData.CommutatorsAmount);
         }
 
-        row[index] = randomizer.Next(0, 2);
+        row[index] = 1;
       }
     }
 
@@ -141,22 +166,90 @@ namespace GeneticAlgorithm
 
       return result;
     }
-    public IEnumerable<Individual> Crossover(Individual firstParent, Individual secondParent)
+    public List<Individual> Crossover(List<Individual> parents)
+    {
+      var randomizedIndexes = GenerateShuffledList(parents.Count);
+
+      List<Individual> childs = new List<Individual>(parents.Count);
+
+      var randomizer = new Random();
+      var breakPoint = randomizer.Next(1, parents.First().Chromosome.Count);
+
+      for (int i = 0; i < parents.Count - 1; i += 2)
+      {
+        var firstParent = parents[i];
+        var secondParent = parents[i + 1];
+
+        List<int[]> firstChildChromosome = firstParent.Chromosome.Take(breakPoint)
+          .Concat(secondParent.Chromosome.Skip(breakPoint)).ToList();
+
+        var firstChild = new Individual(firstChildChromosome, GetFitnessValue);
+
+        List<int[]> secondChildChromosome = secondParent.Chromosome.Take(breakPoint)
+          .Concat(firstParent.Chromosome.Skip(breakPoint)).ToList();
+
+        childs.Add(firstChild);
+        childs.Add(secondParent);
+      }
+
+      return childs;
+    }
+
+    public List<Individual> TryMutate(List<Individual> individuals)
     {
       var randomizer = new Random();
-      var breakPoint = randomizer.Next(0, firstParent.Chromosome.Count - 1);
 
+      foreach (var individual in individuals)
+      {
+        foreach (var row in individual.Chromosome)
+        {
+          if (randomizer.Next(1, 101) <= _algorithmData.MutationProbability * 100)
+          {
+            Array.ForEach(row, (value) => value = value == 1 ? 0 : 1);
+          }
+        }
+      }
 
-      return new Individual[] { new Individual(null) };
+      return individuals;
     }
 
-    public Individual Mutate(Individual individual)
+    private List<int> GenerateShuffledList(int listLength)
     {
-      throw new NotImplementedException();
+      var individualsIndexes = new List<int>(listLength);
+      var randomizedIndexes = new List<int>(listLength);
+
+      for (int i = 0; i < listLength; i++)
+      {
+        individualsIndexes.Add(i);
+      }
+
+      var randomizer = new Random();
+
+      for (int i = 0; individualsIndexes.Count != 0; i++)
+      {
+        var index = randomizer.Next(0, individualsIndexes.Count);
+        randomizedIndexes.Add(individualsIndexes[index]);
+        individualsIndexes.RemoveAt(index);
+      }
+
+      return randomizedIndexes;
     }
-    public Individual Select(Individual first, Individual second)
+
+    public List<Individual> Select(List<Individual> individuals)
     {
-      return (first.FitnessValue > second.FitnessValue ? first : second);
+      var randomizedIndexes = GenerateShuffledList(individuals.Count);
+
+      var winners = new List<Individual>(individuals.Count / 2);
+
+      for ( int i = 0; i < randomizedIndexes.Count - 1; i += 2)
+      {
+        var first = individuals[i];
+        var second = individuals[i + 1];
+
+        winners.Add(first.FitnessValue > second.FitnessValue ? first : second);
+      }
+
+      return winners;
     }
   }
 }

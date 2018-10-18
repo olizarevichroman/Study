@@ -7,13 +7,13 @@ namespace GeneticAlgorithm
 {
   public static class ListExtensions
   {
-    public static  List<int[]> FillWithoutDiagonals(this List<int[]> rows, int minValue, int maxValue, int rowsAmount, int columnsAmount)
+    public static  List<int[]> FillWithoutDiagonals(this List<int[]> rows, int minValue, int maxValue, int size)
     {
       var randomizer = new Random();
 
-      for(int i = 0; i < rowsAmount; i++)
+      for(int i = 0; i < size; i++)
       {
-        rows.Add(new int[columnsAmount]);
+        rows.Add(new int[size]);
 
         for(int j = 0; j < rows[i].Length; j++)
         {
