@@ -71,35 +71,41 @@ namespace GeneticAlgorithm
     }
     public Individual GetBest()
     {
-      var parents = InitializaParents();
+      var initialparentsPool = InitializaParents();
+
+      List<Individual> currentParentsPool = new List<Individual>();
+
+      List<Individual> previousParentsPool = initialparentsPool;
 
       for(int i = 0; i < _algorithmData.LoopsAmountRestriction; i++)
       {
-        var selected = Select(parents);
+        currentParentsPool = Select(previousParentsPool);
+
+        var childs = Crossover(currentParentsPool);
+        currentParentsPool.AddRange(childs);
+
+        var childsFitness = GetFitnessValue(currentParentsPool);
+        var parentsFitness = GetFitnessValue(previousParentsPool);
+        
+        if(childsFitness >= parentsFitness)
+        {
+          currentParentsPool = TryMutate(currentParentsPool);
+        }
 
         if (_bestIndividual == null)
         {
-          _bestIndividual = selected.First();
+          _bestIndividual = currentParentsPool.First();
         }
 
-        foreach(var individual in selected)
+        foreach (var individual in currentParentsPool)
         {
-          if(_bestIndividual.FitnessValue > individual.FitnessValue)
+          if (_bestIndividual.FitnessValue > individual.FitnessValue)
           {
             _bestIndividual = individual;
           }
         }
 
-        var childs = Crossover(selected);
-        var childsFitness = GetFitnessValue(childs);
-        var parentsFitness = GetFitnessValue(parents);
-        
-        if(childsFitness >= parentsFitness)
-        {
-          childs = TryMutate(childs);
-        }
-
-        parents = childs;
+        previousParentsPool = currentParentsPool;
       }
 
       return _bestIndividual;

@@ -22,7 +22,7 @@ namespace GeneticAlgorithm
       var trafficMatrix = new List<int[]>().FillWithoutDiagonals(50, 140, algorithmData.ComputersAmount);
 
       var algorithm = new GeneticAlgorithm(algorithmData, trafficMatrix);
-      Console.WriteLine(algorithm.GetBest());
+      var a = algorithm.GetBest();
     }
   }
 }
