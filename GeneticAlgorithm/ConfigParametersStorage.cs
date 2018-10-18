@@ -4,16 +4,16 @@ using System.Text;
 
 namespace GeneticAlgorithm
 {
-  public static class ConfigParametersStorage
+  public class ConfigParametersStorage
   {
-    public static string CommutatorsAmount { get; } = "commutatorsAmount";
+    public const string COMMUTATORS_AMOUNT  = "commutatorsAmount";
 
-    public static string MaxConnectionsAmount { get; } = "maxConnectionsAmount";
+    public const string MAX_CONNECTIONS_AMOUNT = "maxConnectionsAmount";
 
-    public static string ComputersAmount { get; } = "computersAmount";
+    public const string COMPUTERS_AMOUNT = "computersAmount";
 
-    public static string LoopsAmountRestriction { get; } = "loopsAmountRestriction";
+    public const string LOOPS_AMOUNT_RESTRICTION = "loopsAmountRestriction";
 
-    public static string InitialPopulationAmount { get; } = "initialPopulationAmount";
+    public const string INITIAL_POPULATIONS_AMOUNT = "initialPopulationAmount";
   }
 }

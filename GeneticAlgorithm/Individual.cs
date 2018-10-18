@@ -8,9 +8,9 @@ namespace GeneticAlgorithm
   {
     public int FitnessValue { get; private set; }
 
-    public int[,] Chromosome { get; private set; }
+    public List<int[]> Chromosome { get; private set; }
 
-    public Individual(int[,] chromosome)
+    public Individual(List<int[]> chromosome)
     {
       Chromosome = chromosome;
     }

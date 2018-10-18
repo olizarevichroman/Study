@@ -10,36 +10,60 @@ namespace GeneticAlgorithm
 
     private readonly Individual _bestIndividual;
 
-    private readonly int _loopsAmountRestriction;
+    private readonly AlgorithmData _algorithmData;
 
-    private readonly int _initialPopulationAmount;
+    public List<int[]> TrafficMatrix { get; private set; }
 
-    public int[,] TrafficMatrix { get; private set; }
-
-    public GeneticAlgorithm(int loopsAmountRestriction, int initialPopulationAmount)
+    public GeneticAlgorithm(AlgorithmData algorithmData)
     {
-      _loopsAmountRestriction = loopsAmountRestriction;
-      _initialPopulationAmount = initialPopulationAmount;
+      _algorithmData = algorithmData;
     }
 
-    public int GetFitnessValue(Individual individual)
+    /// <summary>
+    /// Calculate fitness value from collection of individuals
+    /// </summary>
+    /// <param name="individuals">Collection of individuals</param>
+    /// <returns>Value of total fitness</returns>
+    private int GetFitnessValue(IEnumerable<Individual> individuals)
+    {
+      int result = 0;
+
+      foreach(var individual in individuals)
+      {
+        result += GetFitnessValue(individual);
+      }
+
+      return result;
+    }
+
+    /// <summary>
+    /// Calculate fitness value of single individual
+    /// </summary>
+    /// <param name="individual">Individual</param>
+    /// <returns>Value of fitness</returns>
+    private int GetFitnessValue(Individual individual)
     {
       var chromosome = individual.Chromosome;
 
       int result = 0;
 
-      var length = individual.Chromosome.GetLength(0);
-
-      for (int i = 0; i < length; i++)
+      for (int i = 0; i < individual.Chromosome.Count; i++)
       {
-        for (int j = 0; j < length; j++)
+        var senderCommutatorNumber = Array.FindIndex(chromosome[i], (value) => value == 1);
+
+        for (int j = 0; j < individual.Chromosome.Count; j++)
         {
-          if(TrafficMatrix[i, j] == 0)
+          if(TrafficMatrix[i][j] == 0)
           {
             continue;
           }
 
-          throw new NotImplementedException();
+          var receiverCommutatorNumber = Array.FindIndex(chromosome[j], (value) => value == 1);
+
+          if(senderCommutatorNumber != receiverCommutatorNumber)
+          {
+            result += TrafficMatrix[i][j];
+          }
         }
       }
 
@@ -49,7 +73,7 @@ namespace GeneticAlgorithm
     {
       _parents = InitializaParents();
 
-      for(int i = 0; i < _loopsAmountRestriction; i++)
+      for(int i = 0; i < _algorithmData.LoopsAmountRestriction; i++)
       {
 
       }
@@ -57,14 +81,18 @@ namespace GeneticAlgorithm
       return _bestIndividual;
     }
 
+    /// <summary>
+    /// Creates initial population
+    /// </summary>
+    /// <returns>Initial population</returns>
     private IEnumerable<Individual> InitializaParents()
     {
-      var parents = new List<Individual>(_initialPopulationAmount);
+      var parents = new List<Individual>(_algorithmData.InitialPopulationAmount);
 
-      for( int i = 0; i < _initialPopulationAmount; i++)
+      for( int i = 0; i < _algorithmData.InitialPopulationAmount; i++)
       {
-        var chromosome = new int[5, 8]
-          .FillWithRowsRestriction(0, 1, (a => a.Where((element) => element == 1).Count() < 1));
+        var chromosome = new List<int[]>()
+          .FillRows(_algorithmData.ComputersAmount, _algorithmData.CommutatorsAmount, ChromosomeFiller);
          
         var parent = new Individual(chromosome);
         parents.Add(parent);
@@ -73,10 +101,50 @@ namespace GeneticAlgorithm
       return parents;
     }
 
+    /// <summary>
+    /// Fills individual chromosome relying on restrictions
+    /// </summary>
+    /// <param name="chromosome">Result chromosome</param>
+    private void ChromosomeFiller(List<int[]> chromosome)
+    {
+      var randomizer = new Random();
+
+      int index = 0;
+
+      foreach(var row in chromosome)
+      {
+        index = randomizer.Next(0, _algorithmData.CommutatorsAmount);
+
+        while (GetColumnSum(chromosome, index) >= _algorithmData.MaxConnectionsAmount)
+        {          
+          index = randomizer.Next(0, _algorithmData.CommutatorsAmount);
+        }
+
+        row[index] = randomizer.Next(0, 2);
+      }
+    }
+
+    /// <summary>
+    /// Calculates total value of column
+    /// </summary>
+    /// <param name="rows">Maxtix</param>
+    /// <param name="columnNumber">Column number to calculate</param>
+    /// <returns>Total value</returns>
+    private int GetColumnSum(List<int[]> rows, int columnNumber)
+    {
+      int result = 0;
+
+      foreach(var row in rows)
+      {
+        result += row[columnNumber];
+      }
+
+      return result;
+    }
     public IEnumerable<Individual> Crossover(Individual firstParent, Individual secondParent)
     {
       var randomizer = new Random();
-      var breakPoint = randomizer.Next(1, firstParent.Chromosome.Length);
+      var breakPoint = randomizer.Next(0, firstParent.Chromosome.Count - 1);
 
 
       return new Individual[] { new Individual(null) };

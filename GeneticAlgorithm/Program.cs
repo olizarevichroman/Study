@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace GeneticAlgorithm
 {
@@ -7,21 +9,17 @@ namespace GeneticAlgorithm
   {
     static void Main(string[] args)
     {
-      var configBuilder = new ConfigurationBuilder();
-      var config = configBuilder.AddJsonFile($"{Environment.CurrentDirectory}/../../../appsettings.json").Build();
+      string jsonData;
 
-      var computersAmount = Int32.Parse(config[ConfigParametersStorage.ComputersAmount]);
+      using(var reader = new StreamReader($"{Environment.CurrentDirectory}/../../../appsettings.json"))
+      {
+        jsonData = reader.ReadToEnd();
+      }
 
-      var commutatorsAmount = Int32.Parse(config[ConfigParametersStorage.CommutatorsAmount]);
+      var algorithmData = JsonConvert.DeserializeObject<AlgorithmData>(jsonData);
 
-      var trafficMatrix = new int[commutatorsAmount, commutatorsAmount].FillWithoutDiagonals(1, 100);
-
-      var loopsAmountRestriction = Int32.Parse(config[ConfigParametersStorage.LoopsAmountRestriction]);
-
-      var initialPopulationAmount = Int32.Parse(config[ConfigParametersStorage.InitialPopulationAmount]);
-
-      var algorithm = new GeneticAlgorithm(loopsAmountRestriction, initialPopulationAmount);
-      algorithm.GetBest();
+      var algorithm = new GeneticAlgorithm(algorithmData);
+      Console.WriteLine(algorithm.GetBest());
     }
   }
 }
