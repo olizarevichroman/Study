@@ -172,6 +172,12 @@ namespace GeneticAlgorithm
 
       return result;
     }
+
+    /// <summary>
+    /// Crossover parents 
+    /// </summary>
+    /// <param name="parents">Parents</param>
+    /// <returns>Crossovered childs</returns>
     public List<Individual> Crossover(List<Individual> parents)
     {
       var randomizedIndexes = GenerateShuffledList(parents.Count);
@@ -201,24 +207,90 @@ namespace GeneticAlgorithm
       return childs;
     }
 
+    /// <summary>
+    /// Mutate individuals with established mutation probability
+    /// </summary>
+    /// <param name="individuals">Individuals to mutate</param>
+    /// <returns>New invividuals with random persent of mutated instances</returns>
     public List<Individual> TryMutate(List<Individual> individuals)
     {
       var randomizer = new Random();
 
-      foreach (var individual in individuals)
+      for(int i = 0; i < individuals.Count; i++)
       {
-        foreach (var row in individual.Chromosome)
+        if (randomizer.Next(1, 101) <= _algorithmData.MutationProbability * 100)
         {
-          if (randomizer.Next(1, 101) <= _algorithmData.MutationProbability * 100)
-          {
-            Array.ForEach(row, (value) => value = value == 1 ? 0 : 1);
-          }
+          var newChromosome = new List<int[]>().FillRows(_algorithmData.ComputersAmount, _algorithmData.CommutatorsAmount, ChromosomeFiller);
+
+          individuals[i] = new Individual(newChromosome, GetFitnessValue);
         }
       }
 
       return individuals;
     }
 
+    /// <summary>
+    /// Difines is individual compatible to the restrictions
+    /// </summary>
+    /// <param name="individual">Individual to check</param>
+    /// <returns>Is individual compatible</returns>
+    private bool IsСompatibleToRestrictions(Individual individual)
+    {
+      for(int i = 0; i < _algorithmData.CommutatorsAmount; i++)
+      {
+        if(GetColumnSum(individual.Chromosome, i) > _algorithmData.MaxConnectionsAmount)
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    private void Repair(Individual individual)
+    {
+      var invalidColumns = new Dictionary<int, int>();//key - columns index, value - amount of the extra connections
+
+      int currentColumnSum;
+
+      var chromosome = individual.Chromosome;
+
+      for (int i = 0; i < _algorithmData.CommutatorsAmount; i++)
+      {
+        currentColumnSum = GetColumnSum(individual.Chromosome, i);
+
+        if (currentColumnSum > _algorithmData.MaxConnectionsAmount)
+        {
+          invalidColumns.Add(i, _algorithmData.MaxConnectionsAmount - currentColumnSum);
+        }
+      }
+
+      int rowIndexOfRelocation;
+
+      foreach(var invalidColumnValues in invalidColumns)
+      {
+        int columnTotalValue;
+
+        for(int i = 0; i < _algorithmData.CommutatorsAmount; i++)
+        {
+          if (invalidColumns.ContainsKey(i))
+          {
+            continue;
+          }
+
+          columnTotalValue = GetColumnSum(individual.Chromosome, i);
+
+          if (columnTotalValue < _algorithmData.MaxConnectionsAmount)
+          {
+            for(int j = 0; j < _algorithmData.ComputersAmount; j++)
+            {
+              //to do
+            }
+          }
+
+        }
+      }
+    }
     private List<int> GenerateShuffledList(int listLength)
     {
       var individualsIndexes = new List<int>(listLength);
@@ -241,6 +313,11 @@ namespace GeneticAlgorithm
       return randomizedIndexes;
     }
 
+    /// <summary>
+    /// Select best individuals
+    /// </summary>
+    /// <param name="individuals">Individuals for selection</param>
+    /// <returns></returns>
     public List<Individual> Select(List<Individual> individuals)
     {
       var randomizedIndexes = GenerateShuffledList(individuals.Count);
