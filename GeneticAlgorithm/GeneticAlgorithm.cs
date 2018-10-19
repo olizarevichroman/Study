@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace GeneticAlgorithm
 {
@@ -26,13 +27,14 @@ namespace GeneticAlgorithm
     /// <returns>Value of total fitness</returns>
     private int GetFitnessValue(List<Individual> individuals)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       int result = 0;
 
       foreach(var individual in individuals)
       {
         result += GetFitnessValue(individual);
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return result;
     }
 
@@ -43,6 +45,7 @@ namespace GeneticAlgorithm
     /// <returns>Value of fitness</returns>
     private int GetFitnessValue(Individual individual)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var chromosome = individual.Chromosome;
 
       int result = 0;
@@ -66,11 +69,17 @@ namespace GeneticAlgorithm
           }
         }
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return result;
     }
+
+    /// <summary>
+    /// Find the best individual
+    /// </summary>
+    /// <returns>Best individual</returns>
     public Individual GetBest()
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var initialparentsPool = InitializaParents();
 
       List<Individual> currentParentsPool = new List<Individual>();
@@ -107,7 +116,7 @@ namespace GeneticAlgorithm
 
         previousParentsPool = currentParentsPool;
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return _bestIndividual;
     }
 
@@ -117,6 +126,7 @@ namespace GeneticAlgorithm
     /// <returns>Initial population</returns>
     private List<Individual> InitializaParents()
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var parents = new List<Individual>(_algorithmData.InitialPopulationAmount);
 
       for( int i = 0; i < _algorithmData.InitialPopulationAmount; i++)
@@ -128,7 +138,7 @@ namespace GeneticAlgorithm
 
         parents.Add(parent);
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return parents;
     }
 
@@ -138,6 +148,7 @@ namespace GeneticAlgorithm
     /// <param name="chromosome">Result chromosome</param>
     private void ChromosomeFiller(List<int[]> chromosome)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var randomizer = new Random();
 
       int index = 0;
@@ -153,6 +164,7 @@ namespace GeneticAlgorithm
 
         row[index] = 1;
       }
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
     }
 
     /// <summary>
@@ -163,13 +175,14 @@ namespace GeneticAlgorithm
     /// <returns>Total value</returns>
     private int GetColumnSum(List<int[]> rows, int columnNumber)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       int result = 0;
 
       foreach(var row in rows)
       {
         result += row[columnNumber];
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return result;
     }
 
@@ -180,13 +193,14 @@ namespace GeneticAlgorithm
     /// <returns>Crossovered childs</returns>
     public List<Individual> Crossover(List<Individual> parents)
     {
+      Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var randomizedIndexes = GenerateShuffledList(parents.Count);
 
       List<Individual> childs = new List<Individual>(parents.Count);
 
       var randomizer = new Random();
       var breakPoint = randomizer.Next(1, parents.First().Chromosome.Count);
-
+      Console.WriteLine("Tournir");
       for (int i = 0; i < parents.Count - 1; i += 2)
       {
         var firstParent = parents[i];
@@ -203,7 +217,17 @@ namespace GeneticAlgorithm
         childs.Add(firstChild);
         childs.Add(secondParent);
       }
-
+      Console.WriteLine("Tournir finished");
+      Console.WriteLine("Checking for restrictions started");
+      for (int i = 0; i < childs.Count; i++)
+      {
+        if(IsСompatibleToRestrictions(childs[i]) == false)
+        {
+          Repair(childs[i]);
+        }
+      }
+      Console.WriteLine("Checking for restrictions finished");
+      Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return childs;
     }
 
@@ -214,6 +238,7 @@ namespace GeneticAlgorithm
     /// <returns>New invividuals with random persent of mutated instances</returns>
     public List<Individual> TryMutate(List<Individual> individuals)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var randomizer = new Random();
 
       for(int i = 0; i < individuals.Count; i++)
@@ -225,7 +250,7 @@ namespace GeneticAlgorithm
           individuals[i] = new Individual(newChromosome, GetFitnessValue);
         }
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return individuals;
     }
 
@@ -236,19 +261,25 @@ namespace GeneticAlgorithm
     /// <returns>Is individual compatible</returns>
     private bool IsСompatibleToRestrictions(Individual individual)
     {
-      for(int i = 0; i < _algorithmData.CommutatorsAmount; i++)
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
+      for (int i = 0; i < _algorithmData.CommutatorsAmount; i++)
       {
         if(GetColumnSum(individual.Chromosome, i) > _algorithmData.MaxConnectionsAmount)
         {
           return false;
         }
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return true;
     }
 
+    /// <summary>
+    /// Repair individual after crossover if individual does not sutisfy restrictions
+    /// </summary>
+    /// <param name="individual">Individual to repair</param>
     private void Repair(Individual individual)
     {
+      Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var invalidColumns = new Dictionary<int, int>();//key - columns index, value - amount of the extra connections
 
       int currentColumnSum;
@@ -261,38 +292,59 @@ namespace GeneticAlgorithm
 
         if (currentColumnSum > _algorithmData.MaxConnectionsAmount)
         {
-          invalidColumns.Add(i, _algorithmData.MaxConnectionsAmount - currentColumnSum);
+          invalidColumns.Add(i, currentColumnSum - _algorithmData.MaxConnectionsAmount);
         }
       }
-
-      int rowIndexOfRelocation;
 
       foreach(var invalidColumnValues in invalidColumns)
       {
         int columnTotalValue;
-
-        for(int i = 0; i < _algorithmData.CommutatorsAmount; i++)
+        int extraConnectionsAmount = invalidColumnValues.Value;
+        
+        while (extraConnectionsAmount != 0)
         {
-          if (invalidColumns.ContainsKey(i))
-          {
-            continue;
-          }
+          bool isRelocated = false;
 
-          columnTotalValue = GetColumnSum(individual.Chromosome, i);
-
-          if (columnTotalValue < _algorithmData.MaxConnectionsAmount)
+          for (int columnNumber = 0; columnNumber < _algorithmData.CommutatorsAmount && isRelocated == false; columnNumber++)
           {
-            for(int j = 0; j < _algorithmData.ComputersAmount; j++)
+            if (invalidColumns.ContainsKey(columnNumber))
             {
-              //to do
+              continue;
+            }
+
+            columnTotalValue = GetColumnSum(individual.Chromosome, columnNumber);
+
+            if (columnTotalValue < _algorithmData.MaxConnectionsAmount)
+            {
+              //here we have free column (i index) to relocate connection
+              for (int rowNumber = 0; rowNumber < _algorithmData.ComputersAmount; rowNumber++)
+              {
+                //here we should find what computer(row index) we need to relocate from invalid column
+                if(chromosome[rowNumber][invalidColumnValues.Key] == 1)
+                {
+                  chromosome[rowNumber][invalidColumnValues.Key] = 0;
+                  chromosome[rowNumber][columnNumber] = 1;
+                  extraConnectionsAmount--;
+                  isRelocated = true;
+
+                  break;
+                }
+              }
             }
           }
-
         }
       }
+      Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
     }
+
+    /// <summary>
+    /// Generate shuffled list filled with values from 0 to listLength parameter/>
+    /// </summary>
+    /// <param name="listLength">Length and max value in list</param>
+    /// <returns>Shuffled list</returns>
     private List<int> GenerateShuffledList(int listLength)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var individualsIndexes = new List<int>(listLength);
       var randomizedIndexes = new List<int>(listLength);
 
@@ -309,7 +361,7 @@ namespace GeneticAlgorithm
         randomizedIndexes.Add(individualsIndexes[index]);
         individualsIndexes.RemoveAt(index);
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return randomizedIndexes;
     }
 
@@ -320,6 +372,7 @@ namespace GeneticAlgorithm
     /// <returns></returns>
     public List<Individual> Select(List<Individual> individuals)
     {
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name);
       var randomizedIndexes = GenerateShuffledList(individuals.Count);
 
       var winners = new List<Individual>(individuals.Count / 2);
@@ -331,7 +384,7 @@ namespace GeneticAlgorithm
 
         winners.Add(first.FitnessValue > second.FitnessValue ? first : second);
       }
-
+      //Console.WriteLine(MethodBase.GetCurrentMethod().Name + "returned");
       return winners;
     }
   }
